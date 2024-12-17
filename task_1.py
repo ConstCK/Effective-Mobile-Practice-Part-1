@@ -1,4 +1,3 @@
-
 from typing import Self
 
 
@@ -7,9 +6,6 @@ class ObjList:
         self.__data = data
         self.__next = None
         self.__prev = None
-
-    def __repr__(self) -> str:
-        return f'{self.__data}'
 
     def set_next(self, obj: Self) -> None:
         """Изменение следующего узла"""
@@ -76,6 +72,6 @@ class LinkedList:
 
         while obj:
             if obj.get_data():
-                result.append(obj)
+                result.append(obj.get_data())
             obj = obj.get_next()
         return result
