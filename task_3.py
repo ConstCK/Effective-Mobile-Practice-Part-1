@@ -99,27 +99,3 @@ class Router:
 
         self.buffer.clear()
         print('Передача данных завершена...')
-
-
-router = Router()
-s1 = Server()
-s2 = Server()
-s3 = Server()
-d1 = Data('Some data 1', 1)
-d2 = Data('New data 2', 1)
-d3 = Data('New data 3', 1)
-d4 = Data('New data 4', 2)
-d5 = Data('New data 5', 3)
-d6 = Data('New data 6', 4)
-router.link(s1)
-router.link(s2)
-router.link(Server())
-
-s2.send_data(d1)
-s2.send_data(d2)
-s1.send_data(d3)
-
-
-router.send_data()
-print(s1.get_data())
-print(s1.get_data())
