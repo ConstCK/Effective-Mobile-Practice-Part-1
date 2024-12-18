@@ -4,7 +4,7 @@ import time
 # ???
 
 
-class OutFieldException(Exception):
+class StopGameException(Exception):
     pass
 
 
@@ -17,7 +17,7 @@ class GamePole:
 
     def init(self) -> None:
         # Рассчет координат мин
-        mine_indexes = random.sample(range(self.n**2), self.n)
+        mine_indexes = random.sample(range(self.n**2), self.m)
         mine_indexes = [divmod(num, self.n) for num in mine_indexes]
         # Расставляю мины по полю
         for y in range(self.n):
@@ -33,8 +33,8 @@ class GamePole:
     def show(self) -> None:
         """Отрисовка поля в консоли"""
         field = ''
-        field += 'ᵪ\ʸ' + ' '.join([f'{i+1:^1d}' for i in range(self.n)])
-        for n, i in enumerate(self.board, 1):
+        field += 'ᵪ\ʸ' + ' '.join([f'{i:^1d}' for i in range(self.n)])
+        for n, i in enumerate(self.board):
             row = ''.join(str(i))
             row = row.replace(',', '').replace(
                 '[', '').replace('\'', '').replace(']', '')
@@ -75,7 +75,7 @@ class GamePole:
         """Проверка клетки на наличие мин и открытие соседних клеток"""
         y, x = coords
         if self.board[y][x].mine:
-            return 'Вы проиграли!'
+            raise StopGameException('Взрыв...')
         if self.board[y][x].around_mines == 0:
             neighbour_coords = [(y, x-1), (y, x+1), (y-1, x), (y+1, x), (y-1, x-1), (y+1, x+1),
                                 (y-1, x+1), (y+1, x-1)]
@@ -91,7 +91,6 @@ class GamePole:
             for i in row:
                 if i.is_opened:
                     counter += 1
-        print(counter)
         if counter >= self.n**2-self.m:
             return counter
         return False
@@ -106,13 +105,13 @@ class Cell:
 
     def __repr__(self) -> str:
         if self.is_opened and self.mine:
-            return 'x'
+            return '☀'
         elif self.is_opened and not self.mine:
             return f'{self.around_mines}'
         elif self.is_marked and not self.is_opened:
-            return '!'
+            return '✔'
         else:
-            return f'{self.mine}**{self.around_mines}--o'
+            return f'•'
 
 
 class Game:
@@ -123,40 +122,46 @@ class Game:
     @staticmethod
     def _greetings() -> None:
         print('Добро пожаловать в игру "Сапер"')
-        print('☼☼☼ Введите (Y X) для проверки ☼☼☼')
 
-    def show_menu(self):
-        print('Выберите число для навигации по меню')
+    def _show_menu(self):
+        """Вывод меню"""
+        print('Выберите число для навигации по меню:')
         print('1 - Завершение игры')
         print('2 - Отметить клетку как заминированную')
         print('3 - Снять отметку заминированной клетки')
         print('4 - Открыть клетку')
 
     def _enter_menu_selection(self) -> int:
+        """Запрос ввода пункта меню"""
         while True:
             data = input(
-                'Введите число от 1 до 4')
+                'Введите число от 1 до 4:')
             if self._is_correct_choice(data):
                 return int(data)
             print('Ошибка меню.Повторите ввод...')
 
     def _enter_coordinates(self) -> tuple[int, int]:
+        """Запрос ввода координат"""
         while True:
             data = input(
-                'Введите координаты (числа) через пробел в формате "Y X"')
+                'Введите координаты (числа) через пробел в формате "X Y":')
             coords = tuple(data.split())
             if self._are_correct_coordinates(coords):
                 return tuple(map(int, coords))
             print('Ошибка получения координат.Повторите ввод...')
 
-    def _are_correct_coordinatess(self, coords: tuple[str, str]) -> bool:
+    def _are_correct_coordinates(self, coords: tuple[str, str]) -> bool:
+        """Валидация координат"""
+        if len(coords) != 2:
+            return False
         try:
             y, x = int(coords[0]), int(coords[1])
-        except ValueError:
+        except Exception:
             return False
-        return 0 <= coords[0] < y and 0 <= x < self.board.n
+        return 0 <= y < self.board.n and 0 <= x < self.board.n
 
     def _is_correct_choice(self, number: str) -> bool:
+        """Валидация ввода пункта меню"""
         try:
             number = int(number)
         except ValueError:
@@ -164,30 +169,38 @@ class Game:
         return 0 < number < 5
 
     def game_loop(self):
+        """Запуск игррового цикла"""
+        self._greetings()
         while True:
-            self.board.show()
-            if self.board.is_winner():
-                print(
-                    'Поздравляем Вас с победой. Вы набрали {self.board.is_winner()} очков')
-                break
-            choice = self.enter_menu_selection()
-
-            match choice:
-                case 1:
-                    print('Выход из игры...')
-                    time.sleep(2)
+            try:
+                self.board.show()
+                if self.board.is_winner():
+                    print(
+                        f'Поздравляем Вас с победой. Вы набрали {self.board.is_winner()} очков')
                     break
-                case 2:
-                    coords = self._enter_coordinates()
-                    self.board.mark_cell(coords=coords)
+                self._show_menu()
+                choice = self._enter_menu_selection()
 
-                case 3:
-                    coords = self._enter_coordinates()
-                    self.board.unmark_cell(coords=coords)
-                case 4:
-                    pass
+                match choice:
+                    case 1:
+                        print('Выход из игры...')
+                        time.sleep(2)
+                        break
+                    case 2:
+                        coords = self._enter_coordinates()
+                        self.board.mark_cell(coords=coords)
+                    case 3:
+                        coords = self._enter_coordinates()
+                        self.board.unmark_cell(coords=coords)
+                    case 4:
+                        coords = self._enter_coordinates()
+                        self.board.open_cell(coords=coords)
+            except StopGameException:
+                print('Вы проиграли')
+                break
+        self.board.show()
+        print('Конец игры...')
 
 
-miner = GamePole(5, 5)
-miner.show()
-print(miner.is_winner())
+game = Game(5, 6)
+game.game_loop()
