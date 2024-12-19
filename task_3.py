@@ -65,7 +65,7 @@ class Router:
     def __init__(self):
         self.buffer: list[Data] = list()
         self.name = 'Роутер: TP-Link Archer AX53'
-        self.servers: list[Server] = list()
+        self.servers: set[Server] = set()
 
     def __repr__(self) -> str:
         return f'{self.name}'
@@ -75,13 +75,13 @@ class Router:
         print(f'Соединение с {server} устанавливается...')
         time.sleep(1)
         server.router = self
-        self.servers.append(server)
+        self.servers.add(server)
         print(f'Соединение с {server} установлено...')
 
     def unlink(self, server: Server) -> None:
         # Разрыв соединения с указанным сервером
         server.router = None
-        self.servers.remove(server)
+        self.servers.discard(server)
         print(f'Соединение с {server} разорвано...')
 
     def send_data(self) -> None:
