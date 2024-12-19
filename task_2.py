@@ -1,8 +1,6 @@
 import random
 import time
 
-# ???
-
 
 class StopGameException(Exception):
     pass
@@ -12,14 +10,14 @@ class GamePole:
     def __init__(self, n: int = 10, m: int = 12) -> None:
         self.n = n
         self.m = m
-        self.board = [['']*self.n for _ in range(self.n)]
+        self.board = [[None] * self.n for _ in range(self.n)]
         self.init()
 
     def init(self) -> None:
-        # Рассчет координат мин
-        mine_indexes = random.sample(range(self.n**2), self.m)
+        # Расчет координат мин
+        mine_indexes = random.sample(range(self.n ** 2), self.m)
         mine_indexes = [divmod(num, self.n) for num in mine_indexes]
-        # Расставляю мины по полю
+        # Заполняю поле, включая расстановку мин
         for y in range(self.n):
             for x in range(self.n):
                 is_mine = True if (y, x) in mine_indexes else False
@@ -27,8 +25,7 @@ class GamePole:
         # Создаю метки о количестве соседних мин
         for y in range(self.n):
             for x in range(self.n):
-                self.board[y][x].around_mines = self._calculate_around_mines(
-                    y, x)
+                self.board[y][x].around_mines = self._calculate_around_mines(y, x)
 
     def show(self) -> None:
         """Отрисовка поля в консоли"""
@@ -44,12 +41,12 @@ class GamePole:
     def _calculate_around_mines(self, y: int, x: int) -> int:
         """Расчет количества мин на соседних клетках"""
         counter = 0
-        neighbour_coords = [(y, x-1), (y, x+1), (y-1, x), (y+1, x), (y-1, x-1), (y+1, x+1),
-                            (y-1, x+1), (y+1, x-1)]
+        neighbour_coords = [(y, x - 1), (y, x + 1), (y - 1, x), (y + 1, x), (y - 1, x - 1), (y + 1, x + 1),
+                            (y - 1, x + 1), (y + 1, x - 1)]
         neighbour_coords = [x for x in neighbour_coords if not self._is_out(x)]
 
         for coord in neighbour_coords:
-            if self.board[coord[0]][coord[1]].mine == True:
+            if self.board[coord[0]][coord[1]].mine:
                 counter += 1
         return counter
 
@@ -71,14 +68,14 @@ class GamePole:
         self.board[coords[0]][coords[1]].is_opened = True
         self._check_cell(coords)
 
-    def _check_cell(self, coords: tuple[int, int]) -> str:
+    def _check_cell(self, coords: tuple[int, int]) -> None:
         """Проверка клетки на наличие мин и открытие соседних клеток"""
         y, x = coords
         if self.board[y][x].mine:
             raise StopGameException('Взрыв...')
         if self.board[y][x].around_mines == 0:
-            neighbour_coords = [(y, x-1), (y, x+1), (y-1, x), (y+1, x), (y-1, x-1), (y+1, x+1),
-                                (y-1, x+1), (y+1, x-1)]
+            neighbour_coords = [(y, x - 1), (y, x + 1), (y - 1, x), (y + 1, x), (y - 1, x - 1), (y + 1, x + 1),
+                                (y - 1, x + 1), (y + 1, x - 1)]
             neighbour_coords = [
                 x for x in neighbour_coords if not self._is_out(x)]
             for coord in neighbour_coords:
@@ -91,7 +88,7 @@ class GamePole:
             for i in row:
                 if i.is_opened:
                     counter += 1
-        if counter >= self.n**2-self.m:
+        if counter >= self.n ** 2 - self.m:
             return counter
         return False
 
@@ -123,7 +120,8 @@ class Game:
     def _greetings() -> None:
         print('Добро пожаловать в игру "Сапер"')
 
-    def _show_menu(self):
+    @staticmethod
+    def _show_menu():
         """Вывод меню"""
         print('Выберите число для навигации по меню:')
         print('1 - Завершение игры')
@@ -160,7 +158,8 @@ class Game:
             return False
         return 0 <= y < self.board.n and 0 <= x < self.board.n
 
-    def _is_correct_choice(self, number: str) -> bool:
+    @staticmethod
+    def _is_correct_choice(number: str) -> bool:
         """Валидация ввода пункта меню"""
         try:
             number = int(number)
@@ -169,7 +168,7 @@ class Game:
         return 0 < number < 5
 
     def game_loop(self):
-        """Запуск игррового цикла"""
+        """Запуск игрового цикла"""
         self._greetings()
         while True:
             try:
@@ -202,5 +201,5 @@ class Game:
         print('Конец игры...')
 
 
-game = Game(5, 6)
+game = Game(10, 12)
 game.game_loop()
